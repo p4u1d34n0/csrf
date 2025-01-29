@@ -1,0 +1,18 @@
+{
+    "name": "pauldean/csrf",
+    "description": "A lightweight csrf generation and validation tool",
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Pauldean\\Csrf\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Paul Dean",
+            "email": "pauldeano@icloud.com"
+        }
+    ],
+    "require": {}
+}
