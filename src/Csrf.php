@@ -20,6 +20,17 @@ class Csrf
     }
 
     /**
+     * Helper to inject a form input with a name and with the token
+     *
+     * @param string $inputName
+    */
+    public static function csrfInput(string $inputName = 'csrf_token'): void
+    {
+        $token = self::generateToken($inputName);
+        echo '<input type="hidden" name="'.$inputName.'" value="'.$token.'">';
+    }
+
+    /**
      * Generate a CSRF token for a specific form.
      *
      * @param string $formName
