@@ -13,7 +13,7 @@ This PHP class provides a simple way to generate and validate CSRF (Cross-Site R
 Clone the repository or download the `Csrf.php` file and include it in your project.
 
 ```bash
-composer require your/package-name # (if applicable)
+composer require p4u1d34n0/csrf
 ```
 
 ## Usage
