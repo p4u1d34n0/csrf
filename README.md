@@ -21,13 +21,11 @@ composer require p4u1d34n0/csrf
 ```php
 require 'Csrf.php';
 use Security\Csrf;
-
-$csrf = new Csrf();
 ```
 
 ### 2. Generate a Token
 ```php
-$token = $csrf->generateToken('my_form');
+$token = Csrf::generateToken('my_form');
 ```
 Use this token in your form:
 ```html
@@ -40,7 +38,7 @@ Use this token in your form:
 ### 3. Validate a Token
 ```php
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if ($csrf->validateToken('my_form', $_POST['csrf_token'])) {
+    if (Csrf::validateToken('my_form', $_POST['csrf_token'])) {
         echo "Valid request!";
     } else {
         echo "Invalid CSRF token!";
@@ -50,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 ### 4. Clear Tokens (Optional)
 ```php
-$csrf->clearTokens();
+Csrf::clearTokens();
 ```
 
 ## Security Best Practices

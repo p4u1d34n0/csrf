@@ -4,8 +4,8 @@ namespace Security;
 
 class Csrf
 {
-    private $tokens = [];
-    private $sessionKey = 'csrf_tokens';
+    private static $tokens = [];
+    private static $sessionKey = 'csrf_tokens';
 
     public function __construct()
     {
@@ -25,11 +25,11 @@ class Csrf
      * @param string $formName
      * @return string
      */
-    public function generateToken(string $formName): string
+    public static function generateToken(string $formName): string
     {
         $token = bin2hex(random_bytes(32));
-        $this->tokens[$formName] = $token;
-        $this->storeTokens();
+        self::$tokens[$formName] = $token;
+        self::storeTokens();
         return $token;
     }
 
@@ -40,35 +40,38 @@ class Csrf
      * @param string $submittedToken
      * @return bool
      */
-    public function validateToken(string $formName, string $submittedToken): bool
+    public static function validateToken(string $formName, string $submittedToken): bool
     {
-        if (!isset($this->tokens[$formName])) {
-            return false; // No token exists for this form
+        if (!isset(self::$tokens[$formName])) {
+            // No token exists for this form
+            return false;
         }
 
-        if (hash_equals($this->tokens[$formName], $submittedToken)) {
-            unset($this->tokens[$formName]); // Invalidate token after validation
-            $this->storeTokens();
+        if (hash_equals(self::$tokens[$formName], $submittedToken)) {
+            // Invalidate token after validation
+            unset(self::$tokens[$formName]);
+            self::storeTokens();
             return true;
         }
 
-        return false; // Token mismatch
+        // Token mismatch
+        return false;
     }
 
     /**
      * Remove expired or unused tokens.
      */
-    public function clearTokens(): void
+    public static function clearTokens(): void
     {
-        $this->tokens = [];
-        $this->storeTokens();
+        self::$tokens = [];
+        self::storeTokens();
     }
 
     /**
      * Store the tokens in the session.
      */
-    private function storeTokens(): void
+    private static function storeTokens(): void
     {
-        $_SESSION[$this->sessionKey] = $this->tokens;
+        $_SESSION[self::$sessionKey] = self::$tokens;
     }
 }
