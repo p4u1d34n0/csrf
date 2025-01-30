@@ -4,85 +4,65 @@ namespace Security;
 
 class Csrf
 {
-    private static $tokens = [];
     private static $sessionKey = 'csrf_tokens';
 
+    /**
+     * Initialize CSRF tokens on page load.
+     */
     public function __construct()
     {
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
 
-        // Load existing tokens from session
-        if (isset($_SESSION[$this->sessionKey])) {
-            $this->tokens = $_SESSION[$this->sessionKey];
+        if (!isset($_SESSION[self::$sessionKey])) {
+            $_SESSION[self::$sessionKey] = [];
         }
     }
 
     /**
-     * Helper to inject a form input with a name and with the token
+     * Generate a new CSRF token and store it.
      *
-     * @param string $inputName
-    */
-    public static function csrfInput(string $inputName = 'csrf_token'): void
-    {
-        $token = self::generateToken($inputName);
-        echo '<input type="hidden" name="'.$inputName.'" value="'.$token.'">';
-    }
-
-    /**
-     * Generate a CSRF token for a specific form.
-     *
-     * @param string $formName
      * @return string
      */
-    public static function generateToken(string $formName): string
+    public static function generateToken(): string
     {
         $token = bin2hex(random_bytes(32));
-        self::$tokens[$formName] = $token;
-        self::storeTokens();
+        // Store token in session
+        $_SESSION[self::$sessionKey][$token] = true;
         return $token;
     }
 
     /**
-     * Validate a CSRF token for a specific form.
+     * Inject a CSRF hidden input into a form.
+     */
+    public static function input(): void
+    {
+        $token = self::generateToken();
+        echo '<input type="hidden" name="csrf_token" value="'.$token.'">';
+    }
+
+    /**
+     * Validate the submitted CSRF token. Ensure One-time use.
      *
-     * @param string $formName
      * @param string $submittedToken
      * @return bool
      */
-    public static function validateToken(string $formName, string $submittedToken): bool
+    public static function validate(string $submittedToken): bool
     {
-        if (!isset(self::$tokens[$formName])) {
-            // No token exists for this form
-            return false;
-        }
-
-        if (hash_equals(self::$tokens[$formName], $submittedToken)) {
-            // Invalidate token after validation
-            unset(self::$tokens[$formName]);
-            self::storeTokens();
+        if (isset($_SESSION[self::$sessionKey][$submittedToken])) {
+            unset($_SESSION[self::$sessionKey][$submittedToken]);
             return true;
         }
-
-        // Token mismatch
         return false;
     }
 
     /**
-     * Remove expired or unused tokens.
+     * Clear all stored CSRF tokens (optional).
      */
     public static function clearTokens(): void
     {
-        self::$tokens = [];
-        self::storeTokens();
+        $_SESSION[self::$sessionKey] = [];
     }
 
-    /**
-     * Store the tokens in the session.
-     */
-    private static function storeTokens(): void
-    {
-        $_SESSION[self::$sessionKey] = self::$tokens;
-    }
 }

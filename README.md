@@ -1,67 +1,81 @@
-# CSRF Protection Class
+# CSRF Protection Implementation
 
-This PHP class provides a simple way to generate and validate CSRF (Cross-Site Request Forgery) tokens for forms in your application. It helps protect against CSRF attacks by ensuring that form submissions originate from your site.
+This guide will walk you through the implementation and usage of CSRF (Cross-Site Request Forgery) protection using PHP and JavaScript. The code contains two primary components: the `Csrf` class for generating and validating CSRF tokens.
 
-## Features
-- Generate CSRF tokens for specific forms
-- Validate CSRF tokens upon form submission
-- Store tokens in session for security
-- Invalidate tokens after validation
-- Clear all stored tokens when needed
+---
 
-## Installation
-Clone the repository or download the `Csrf.php` file and include it in your project.
+## Overview
 
-```bash
-composer require p4u1d34n0/csrf
-```
+Cross-Site Request Forgery (CSRF) attacks exploit a user's authenticated session to perform unauthorized actions on a web application. CSRF protection typically involves generating a unique token for each form and validating that token when the form is submitted.
 
-## Usage
-### 1. Initialize CSRF Protection
-```php
-require 'Csrf.php';
-use Security\Csrf;
-```
+In this implementation:
+- The `Csrf` class handles CSRF token creation, storage, and validation.
 
-### 2. Generate a Token
-```php
-$token = Csrf::generateToken('my_form');
-```
-Use this token in your form:
+---
+
+## PHP Backend Implementation
+
+### Csrf Class
+
+The `Csrf` class is responsible for generating CSRF tokens, storing them in the user's session, and validating incoming requests.
+
+#### Key Methods:
+- **`generateToken()`**: Creates a new CSRF token and stores it in the session.
+- **`input()`**: Injects the CSRF token as a hidden form field.
+- **`validate($submittedToken)`**: Validates the CSRF token submitted with the request.
+- **`clearTokens()`**: Clears all CSRF tokens from the session (useful for logout or session reset).
+
+---
+
+### CsrfMiddleware Class
+
+The `CsrfMiddleware` class is a middleware component that checks for the presence and validity of a CSRF token in the POST request.
+
+#### Key Method:
+- **`handle()`**: This method checks the request method and validates the CSRF token. If validation fails, it sends a `403 Forbidden` response and halts further execution.
+
+To use this middleware, you would typically call `CsrfMiddleware::handle()` before processing any form data or sensitive POST actions.
+
+Use this in your PHP API before handling any business logic.
+
+---
+
+### Injecting CSRF Token into Forms
+
+You can inject a CSRF token as a hidden input field in your form like this:
+
 ```html
-<form method="POST">
-    <input type="hidden" name="csrf_token" value="<?php echo $token; ?>">
+<form method="POST" action="/submit">
+    <?php \Security\Csrf::input(); ?>
+    <input type="text" name="username" />
+    <input type="password" name="password" />
     <button type="submit">Submit</button>
 </form>
 ```
 
-### 3. Validate a Token
+### Validation Example
 ```php
+
+// Include the CSRF class
+use \Security\Csrf;
+
+// Check if the form has been submitted and validate CSRF token
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (Csrf::validateToken('my_form', $_POST['csrf_token'])) {
-        echo "Valid request!";
-    } else {
-        echo "Invalid CSRF token!";
+    // Ensure the CSRF token is present and validate it
+    $submittedToken = $_POST['csrf_token'] ?? '';
+
+    if (!Csrf::validate($submittedToken)) {
+        // CSRF token validation failed
+        echo "Invalid CSRF token. Request denied.";
+        exit; // Optionally, you can send a 403 response here
     }
+
+    // Token validated, proceed with business logic
+    $username = $_POST['username'];
+    $password = $_POST['password'];
+
+    // Process form data (e.g., authentication, database save, etc.)
+    echo "Form submitted successfully! Username: $username";
 }
+
 ```
-
-### 4. Clear Tokens (Optional)
-```php
-Csrf::clearTokens();
-```
-
-## Security Best Practices
-- Ensure sessions are started before using CSRF tokens.
-- Always validate CSRF tokens before processing form submissions.
-- Regenerate tokens periodically to prevent reuse.
-- Use HTTPS to prevent token leakage via MITM attacks.
-
-## License
-This project is licensed under the MIT License.
-
-## Contributions
-Contributions are welcome! Feel free to submit issues or pull requests.
-
-## Author
-Developed by Paul Dean
